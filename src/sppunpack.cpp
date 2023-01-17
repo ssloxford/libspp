@@ -5,7 +5,7 @@
 #include "libspp/libspp.h"
 
 int main(int argc, char *argv[]) {
-  cxxopts::Options options("ccsdsunpack", "Unpack a CCSDS packet stream from stdin to stdout");
+  cxxopts::Options options("sppunpack", "Unpack a CCSDS SPP packet stream from stdin to stdout");
   options.add_options()
     ("h,help", "Print usage")
     ;
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-  CCSDSPacket packet;
+  SPPPacket packet;
   while (std::cin >> packet) {
     std::vector<std::byte> data = packet.data();
     for (auto&& it : data) {

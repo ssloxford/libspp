@@ -16,9 +16,9 @@
 
 // https://public.ccsds.org/Pubs/133x0b2e1.pdf
 
-struct CCSDSPacket;
+struct SPPPacket;
 
-namespace ccsds {
+namespace spp {
   constexpr int VERSION_NUMBER_LEN = 3;
   constexpr int TYPE_FLAG_LEN = 1;
   constexpr int SEC_HDR_FLAG_LEN = 1;
@@ -29,18 +29,18 @@ namespace ccsds {
 };
 
 #pragma pack(push, 1)
-struct CCSDSPrimaryHeader{
-  friend CCSDSPacket;
+struct SPPPrimaryHeader{
+  friend SPPPacket;
 private:
-  uint16_t _app_id_h : ccsds::APP_ID_LEN - 8 = 0;
-  uint16_t _sec_hdr_flag : ccsds::SEC_HDR_FLAG_LEN = 0;
-  uint16_t _type : ccsds::TYPE_FLAG_LEN = 0;
-  uint16_t _version_number : ccsds::VERSION_NUMBER_LEN = 0;
+  uint16_t _app_id_h : spp::APP_ID_LEN - 8 = 0;
+  uint16_t _sec_hdr_flag : spp::SEC_HDR_FLAG_LEN = 0;
+  uint16_t _type : spp::TYPE_FLAG_LEN = 0;
+  uint16_t _version_number : spp::VERSION_NUMBER_LEN = 0;
   uint16_t _app_id_l : 8 = 0;
-  uint16_t _seq_cnt_or_name_h : ccsds::SEQ_CNT_OR_NAME_LEN - 8 = 0;
-  uint16_t _seq_flags : ccsds::SEQ_FLAGS_LEN = 0;
+  uint16_t _seq_cnt_or_name_h : spp::SEQ_CNT_OR_NAME_LEN - 8 = 0;
+  uint16_t _seq_flags : spp::SEQ_FLAGS_LEN = 0;
   uint16_t _seq_cnt_or_name_l : 8 = 0;
-  uint16_t _data_len_h : ccsds::DATA_LEN_LEN - 8 = 0;
+  uint16_t _data_len_h : spp::DATA_LEN_LEN - 8 = 0;
   uint16_t _data_len_l : 8 = 0;
 
 public:
@@ -77,20 +77,20 @@ public:
   auto end() const { return Iterator(reinterpret_cast<const std::byte*>(this + 6)); }
 };
 #pragma pack(pop)
-static_assert(std::is_trivially_copyable_v<CCSDSPrimaryHeader>,
-              "CCSDSPrimaryHeader is not trivially copyable");
-static_assert(std::is_standard_layout_v<CCSDSPrimaryHeader>,
-              "CCSDSPrimaryHeader is not a standard layout type");
-static_assert(sizeof(CCSDSPrimaryHeader) == 6,
-              "CCSDSPrimaryHeader is not of size 6 as in the spec");
+static_assert(std::is_trivially_copyable_v<SPPPrimaryHeader>,
+              "SPPPrimaryHeader is not trivially copyable");
+static_assert(std::is_standard_layout_v<SPPPrimaryHeader>,
+              "SPPPrimaryHeader is not a standard layout type");
+static_assert(sizeof(SPPPrimaryHeader) == 6,
+              "SPPPrimaryHeader is not of size 6 as in the spec");
 
 // 0 denotes a data section of a single byte
-static constexpr std::size_t CCSDS_MAX_DATA_LEN = std::pow(2, 16);
+static constexpr std::size_t SPP_MAX_DATA_LEN = std::pow(2, 16);
 
-struct CCSDSDataField {
-  friend CCSDSPacket;
-  friend auto operator<<(std::ostream & output, CCSDSPacket & packet) -> std::ostream &;
-  friend auto operator>>(std::istream & input, CCSDSPacket & packet) -> std::istream &;
+struct SPPDataField {
+  friend SPPPacket;
+  friend auto operator<<(std::ostream & output, SPPPacket & packet) -> std::ostream &;
+  friend auto operator>>(std::istream & input, SPPPacket & packet) -> std::istream &;
 private:
   // TODO: initialise into secondary header and user data field
   std::vector<std::byte> _data = std::vector<std::byte>(0);
@@ -113,12 +113,12 @@ public:
 };
 
 
-struct CCSDSPacket {
+struct SPPPacket {
 private:
-  CCSDSPrimaryHeader primary_header;
-  CCSDSDataField data_field;
+  SPPPrimaryHeader primary_header;
+  SPPDataField data_field;
 
-  // TODO: refactor so that CCSDSPacket is laid out in memory more like the real packet?
+  // TODO: refactor so that SPPPacket is laid out in memory more like the real packet?
   bool dirty_length = true;
 
 public:
@@ -131,8 +131,8 @@ public:
     using reference         = std::byte&;
 
     Iterator(
-      CCSDSPrimaryHeader::Iterator it,
-      CCSDSPacket* parent
+      SPPPrimaryHeader::Iterator it,
+      SPPPacket* parent
       ) : it(it), parent(parent) {}
     Iterator(std::vector<std::byte>::iterator it) : it(it) {}
 
@@ -145,15 +145,15 @@ public:
     // Prefix increment
     Iterator& operator++() { 
       // Increment the iterator
-      if (std::holds_alternative<CCSDSPrimaryHeader::Iterator>(it)) {
-        std::get<CCSDSPrimaryHeader::Iterator>(it)++;
+      if (std::holds_alternative<SPPPrimaryHeader::Iterator>(it)) {
+        std::get<SPPPrimaryHeader::Iterator>(it)++;
       } else {
         std::get<std::vector<std::byte>::iterator>(it)++;
       }
 
       // Wrap over to next field
-      if (std::holds_alternative<CCSDSPrimaryHeader::Iterator>(it) &&
-          std::get<const CCSDSPrimaryHeader::Iterator>(it) == parent->primary_header.end()) {
+      if (std::holds_alternative<SPPPrimaryHeader::Iterator>(it) &&
+          std::get<const SPPPrimaryHeader::Iterator>(it) == parent->primary_header.end()) {
         it = parent->data_field.begin();
       }
       return *this; 
@@ -178,8 +178,8 @@ public:
     friend bool operator!= (const Iterator& a, const Iterator& b) { return a.it != b.it; };     
 
   private:
-    std::variant<const CCSDSPrimaryHeader::Iterator, const std::vector<std::byte>::iterator> it;
-    const CCSDSPacket* parent;
+    std::variant<const SPPPrimaryHeader::Iterator, const std::vector<std::byte>::iterator> it;
+    const SPPPacket* parent;
   };
 
   Iterator begin() { return Iterator(primary_header.begin(), this); }
@@ -283,48 +283,48 @@ public:
           throw (std::invalid_argument("Data field must contain at least one byte"));
         }
         dirty_length = true;
-        int size = std::min(s.size(), CCSDS_MAX_DATA_LEN);
+        int size = std::min(s.size(), SPP_MAX_DATA_LEN);
         data_field.resize(size);
         std::copy_n(s.begin(), size, data_field._data.begin());
       }
     };
   }
 
-  CCSDSPacket() = default;
-  CCSDSPacket(uint8_t const *const input) {
+  SPPPacket() = default;
+  SPPPacket(uint8_t const *const input) {
     // Memcpy the fixed length header
-    std::memcpy(&primary_header, input, sizeof(CCSDSPrimaryHeader));
+    std::memcpy(&primary_header, input, sizeof(SPPPrimaryHeader));
     auto len = data_len() + 1;   // Length 0 is used to mean a single byte
     data_field.resize(len);
-    std::memcpy(&data_field._data, &(input[sizeof(CCSDSPrimaryHeader)]), len);
+    std::memcpy(&data_field._data, &(input[sizeof(SPPPrimaryHeader)]), len);
   }
 
   auto size() -> size_t {
     return sizeof(primary_header) + data_field.size();
   }
 
-  friend auto operator<<(std::ostream & output, CCSDSPacket & packet) -> std::ostream &;
-  friend auto operator>>(std::istream & input, CCSDSPacket & packet) -> std::istream &;
+  friend auto operator<<(std::ostream & output, SPPPacket & packet) -> std::ostream &;
+  friend auto operator>>(std::istream & input, SPPPacket & packet) -> std::istream &;
 };
 
 
-auto operator<<(std::ostream & output, CCSDSPacket & packet) -> std::ostream & {
+auto operator<<(std::ostream & output, SPPPacket & packet) -> std::ostream & {
   if (packet.dirty_length) {
     // Set the length in accordance with the data length
     packet.data_len() = packet.data_field.size() - 1;
     packet.dirty_length = false;
   }
-  output.write(reinterpret_cast<char*>(&packet.primary_header), sizeof(CCSDSPrimaryHeader));
+  output.write(reinterpret_cast<char*>(&packet.primary_header), sizeof(SPPPrimaryHeader));
   output.write(reinterpret_cast<char*>(packet.data_field._data.data()), packet.data_field.size());
   return output;
 }
 
 
 // TODO: is this safe in the case where there we didn't read enough input?
-auto operator>>(std::istream & input, CCSDSPacket & packet) -> std::istream & {
-  std::array<char, sizeof(CCSDSPrimaryHeader)> header = {};
-  input.read(header.data(), sizeof(CCSDSPrimaryHeader));
-  std::memcpy(&packet.primary_header, header.data(), sizeof(CCSDSPrimaryHeader));
+auto operator>>(std::istream & input, SPPPacket & packet) -> std::istream & {
+  std::array<char, sizeof(SPPPrimaryHeader)> header = {};
+  input.read(header.data(), sizeof(SPPPrimaryHeader));
+  std::memcpy(&packet.primary_header, header.data(), sizeof(SPPPrimaryHeader));
 
   auto data_len = packet.data_len() + 1;   // Length 0 is used to mean a single byte
   std::vector<char> data;

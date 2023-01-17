@@ -44,89 +44,89 @@ auto validate_args(
 */
 
 int main(int argc, char *argv[]) {
-  cxxopts::Options options("ccsdsfilter", "Filter CCSDS packets that match any given selector from stdin to stdout");
+  cxxopts::Options options("sppfilter", "Filter CCSDS SPP packets that match any given selector from stdin to stdout");
   options.add_options()
     (
       "n,version-number",
       "Select version number - <int (0-"
-        + std::to_string((int)pow(2, ccsds::VERSION_NUMBER_LEN)-1)
+        + std::to_string((int)pow(2, spp::VERSION_NUMBER_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
     (
       "N,except-version-number",
       "Select all except version number - <int (0-"
-        + std::to_string((int)pow(2, ccsds::VERSION_NUMBER_LEN)-1)
+        + std::to_string((int)pow(2, spp::VERSION_NUMBER_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
     (
       "t,type-flag",
       "Select packet type flag - \"telemetry\"|\"telecommand\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::TYPE_FLAG_LEN)-1)
+        + std::to_string((int)pow(2, spp::TYPE_FLAG_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "T,except-type-flag",
       "Select all except packet type flag - \"telemetry\"|\"telecommand\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::TYPE_FLAG_LEN)-1)
+        + std::to_string((int)pow(2, spp::TYPE_FLAG_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "f,sec-hdr-flag",
       "Select secondary header flag - <int (0-"
-        + std::to_string((int)pow(2, ccsds::SEC_HDR_FLAG_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEC_HDR_FLAG_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
     (
       "F,except-sec-hdr-flag",
       "Select all except secondary header flag - <int (0-"
-        + std::to_string((int)pow(2, ccsds::SEC_HDR_FLAG_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEC_HDR_FLAG_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
     (
       "a,app-id",
       "Select application process id - \"aqua_modis\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::APP_ID_LEN)-1)
+        + std::to_string((int)pow(2, spp::APP_ID_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "A,except-app-id",
       "Select all except application process id - \"aqua_modis\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::APP_ID_LEN)-1)
+        + std::to_string((int)pow(2, spp::APP_ID_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "s,seq-flags",
       "Select sequence flags - \"first\"|\"last\"|\"continuation\"|\"unsegmented\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::SEQ_FLAGS_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEQ_FLAGS_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "S,except-seq-flags",
       "Select all except sequence flags, incidating whether the packets' data is a segment of a larger set - \"first\"|\"last\"|\"continuation\"|\"unsegmented\"|<int (0-"
-        + std::to_string((int)pow(2, ccsds::SEQ_FLAGS_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEQ_FLAGS_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<std::string>>()
     )
     (
       "c,seq-cnt-or-name",
       "Select packet sequence count or packet name - <int (0-"
-        + std::to_string((int)pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEQ_CNT_OR_NAME_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
     (
       "C,except-seq-cnt-or-name",
       "Select packet sequence count or packet name - <int (0-"
-        + std::to_string((int)pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)-1)
+        + std::to_string((int)pow(2, spp::SEQ_CNT_OR_NAME_LEN)-1)
         + ")>",
       cxxopts::value<std::vector<int>>()
     )
@@ -147,16 +147,16 @@ int main(int argc, char *argv[]) {
 
   auto version_numbers = get_result<std::vector<int>>(result["version-number"]);
   for (auto v : version_numbers) {
-    if (v >= pow(2, ccsds::VERSION_NUMBER_LEN)) {
-      std::cerr << "Error: version-number must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::VERSION_NUMBER_LEN)) {
+      std::cerr << "Error: version-number must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
 
   auto except_version_numbers = get_result<std::vector<int>>(result["version-number"]);
   for (auto v : except_version_numbers) {
-    if (v >= pow(2, ccsds::VERSION_NUMBER_LEN)) {
-      std::cerr << "Error: except-version-number must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::VERSION_NUMBER_LEN)) {
+      std::cerr << "Error: except-version-number must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
@@ -170,13 +170,13 @@ int main(int argc, char *argv[]) {
     } else {
       try {
         types.emplace_back(std::stoi(v));
-        if (types.back() >= pow(2, ccsds::TYPE_FLAG_LEN)) {
-          std::cerr << "Error: type-flag must be between 0 and " << pow(2, ccsds::TYPE_FLAG_LEN)-1 << '\n';
+        if (types.back() >= pow(2, spp::TYPE_FLAG_LEN)) {
+          std::cerr << "Error: type-flag must be between 0 and " << pow(2, spp::TYPE_FLAG_LEN)-1 << '\n';
           valid = false;
         }
       }
       catch(std::invalid_argument) {
-        std::cerr << "Error: type-flag must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, ccsds::TYPE_FLAG_LEN)-1 << ")>" << '\n';
+        std::cerr << "Error: type-flag must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, spp::TYPE_FLAG_LEN)-1 << ")>" << '\n';
         valid = false;
       }
       catch(std::out_of_range) {
@@ -195,13 +195,13 @@ int main(int argc, char *argv[]) {
     } else {
       try {
         except_types.emplace_back(std::stoi(v));
-        if (except_types.back() >= pow(2, ccsds::TYPE_FLAG_LEN)) {
-          std::cerr << "Error: except-type-flag must be between 0 and " << pow(2, ccsds::TYPE_FLAG_LEN)-1 << '\n';
+        if (except_types.back() >= pow(2, spp::TYPE_FLAG_LEN)) {
+          std::cerr << "Error: except-type-flag must be between 0 and " << pow(2, spp::TYPE_FLAG_LEN)-1 << '\n';
           valid = false;
         }
       }
       catch(std::invalid_argument) {
-        std::cerr << "Error: except-type-flag must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, ccsds::TYPE_FLAG_LEN)-1 << ")>" << '\n';
+        std::cerr << "Error: except-type-flag must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, spp::TYPE_FLAG_LEN)-1 << ")>" << '\n';
         valid = false;
       }
       catch(std::out_of_range) {
@@ -213,16 +213,16 @@ int main(int argc, char *argv[]) {
 
   auto sec_hdr_flags = get_result<std::vector<int>>(result["sec-hdr-flag"]);
   for (auto v : sec_hdr_flags) {
-    if (v >= pow(2, ccsds::SEC_HDR_FLAG_LEN)) {
-      std::cerr << "Error: sec-hdr-flag must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::SEC_HDR_FLAG_LEN)) {
+      std::cerr << "Error: sec-hdr-flag must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
 
   auto except_sec_hdr_flags = get_result<std::vector<int>>(result["sec-hdr-flag"]);
   for (auto v : except_sec_hdr_flags) {
-    if (v >= pow(2, ccsds::SEC_HDR_FLAG_LEN)) {
-      std::cerr << "Error: except-sec-hdr-flag must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::SEC_HDR_FLAG_LEN)) {
+      std::cerr << "Error: except-sec-hdr-flag must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
@@ -234,8 +234,8 @@ int main(int argc, char *argv[]) {
     } catch (std::out_of_range) {
       try {
         app_ids.emplace_back(std::stoi(v));
-        if (app_ids.back() >= pow(2, ccsds::APP_ID_LEN)) {
-          std::cerr << "Error: app-id must be between 0 and " << pow(2, ccsds::APP_ID_LEN)-1 << '\n';
+        if (app_ids.back() >= pow(2, spp::APP_ID_LEN)) {
+          std::cerr << "Error: app-id must be between 0 and " << pow(2, spp::APP_ID_LEN)-1 << '\n';
           valid = false;
         }
       }
@@ -258,8 +258,8 @@ int main(int argc, char *argv[]) {
     } catch (std::out_of_range) {
       try {
         except_app_ids.emplace_back(std::stoi(v));
-        if (except_app_ids.back() >= pow(2, ccsds::APP_ID_LEN)) {
-          std::cerr << "Error: except-app-id must be between 0 and " << pow(2, ccsds::APP_ID_LEN)-1 << '\n';
+        if (except_app_ids.back() >= pow(2, spp::APP_ID_LEN)) {
+          std::cerr << "Error: except-app-id must be between 0 and " << pow(2, spp::APP_ID_LEN)-1 << '\n';
           valid = false;
         }
       }
@@ -288,13 +288,13 @@ int main(int argc, char *argv[]) {
     } else {
       try {
         seq_flags.emplace_back(std::stoi(v));
-        if (seq_flags.back() >= pow(2, ccsds::TYPE_FLAG_LEN)) {
-          std::cerr << "Error: seq-flags must be between 0 and " << pow(2, ccsds::TYPE_FLAG_LEN)-1 << '\n';
+        if (seq_flags.back() >= pow(2, spp::TYPE_FLAG_LEN)) {
+          std::cerr << "Error: seq-flags must be between 0 and " << pow(2, spp::TYPE_FLAG_LEN)-1 << '\n';
           valid = false;
         }
       }
       catch(std::invalid_argument) {
-        std::cerr << "Error: seq-flags must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, ccsds::TYPE_FLAG_LEN)-1 << ")>" << '\n';
+        std::cerr << "Error: seq-flags must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, spp::TYPE_FLAG_LEN)-1 << ")>" << '\n';
         valid = false;
       }
       catch(std::out_of_range) {
@@ -317,13 +317,13 @@ int main(int argc, char *argv[]) {
     } else {
       try {
         except_seq_flags.emplace_back(std::stoi(v));
-        if (except_seq_flags.back() >= pow(2, ccsds::TYPE_FLAG_LEN)) {
-          std::cerr << "Error: except-seq-flags must be between 0 and " << pow(2, ccsds::TYPE_FLAG_LEN)-1 << '\n';
+        if (except_seq_flags.back() >= pow(2, spp::TYPE_FLAG_LEN)) {
+          std::cerr << "Error: except-seq-flags must be between 0 and " << pow(2, spp::TYPE_FLAG_LEN)-1 << '\n';
           valid = false;
         }
       }
       catch(std::invalid_argument) {
-        std::cerr << "Error: except-seq-flags must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, ccsds::TYPE_FLAG_LEN)-1 << ")>" << '\n';
+        std::cerr << "Error: except-seq-flags must be either \"telemetry\", \"telecommand\", or <int (0-" << pow(2, spp::TYPE_FLAG_LEN)-1 << ")>" << '\n';
         valid = false;
       }
       catch(std::out_of_range) {
@@ -335,22 +335,22 @@ int main(int argc, char *argv[]) {
 
   auto seq_cnt_or_names = get_result<std::vector<int>>(result["seq-cnt_or-name"]);
   for (auto v : seq_cnt_or_names) {
-    if (v >= pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)) {
-      std::cerr << "Error: seq-cnt_or-name must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::SEQ_CNT_OR_NAME_LEN)) {
+      std::cerr << "Error: seq-cnt_or-name must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
 
   auto except_seq_cnt_or_names = get_result<std::vector<int>>(result["seq-cnt_or-name"]);
   for (auto v : except_seq_cnt_or_names) {
-    if (v >= pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)) {
-      std::cerr << "Error: except-seq-cnt_or-name must be between 0 and " << pow(2, ccsds::VERSION_NUMBER_LEN)-1 << '\n';
+    if (v >= pow(2, spp::SEQ_CNT_OR_NAME_LEN)) {
+      std::cerr << "Error: except-seq-cnt_or-name must be between 0 and " << pow(2, spp::VERSION_NUMBER_LEN)-1 << '\n';
       valid = false;
     }
   }
 
   /*
-  CCSDSPacket packet;
+  SPPPacket packet;
   while (std::cin >> packet) {
     if (std::ranges::find(version_numbers, packet.version_number()) != version_numbers.end()) {
       std::cout << packet;
@@ -359,19 +359,19 @@ int main(int argc, char *argv[]) {
   */
 
 /*
-  if (result["seq-cnt-or-name"].as<int>() >= pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)) {
-    std::cerr << "Error: seq-cnt-or-name must be between 0 and " << pow(2, ccsds::SEQ_CNT_OR_NAME_LEN)-1 << '\n';
+  if (result["seq-cnt-or-name"].as<int>() >= pow(2, spp::SEQ_CNT_OR_NAME_LEN)) {
+    std::cerr << "Error: seq-cnt-or-name must be between 0 and " << pow(2, spp::SEQ_CNT_OR_NAME_LEN)-1 << '\n';
     valid = false;
   }
 
 
   auto buffer = std::vector<std::byte> {};
-  buffer.resize(ccsds::MAX_DATA_LEN);
+  buffer.resize(spp::MAX_DATA_LEN);
 
   int n_read = 0;
   char c;
   while (std::cin.get(c)) {
-    if (n_read >= ccsds::MAX_DATA_LEN) {
+    if (n_read >= spp::MAX_DATA_LEN) {
       break;
     }
     buffer[n_read] = std::byte(c);
@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
 
   buffer.resize(n_read);
 
-  CCSDSPacket packet;
+  SPPPacket packet;
   packet.data() = buffer;
   packet.version_number() = result["version-number"].as<int>();
   packet.type() = type;

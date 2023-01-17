@@ -17,9 +17,9 @@
 
 // https://public.ccsds.org/Pubs/133x0b2e1.pdf
 
-template <typename SecondaryHeader, typename DataField> struct CCSDSPacket;
+template <typename SecondaryHeader, typename DataField> struct SPPPacket;
 
-namespace ccsds {
+namespace spp {
 constexpr int VERSION_NUMBER_LEN = 3;
 constexpr int TYPE_FLAG_LEN = 1;
 constexpr int SEC_HDR_FLAG_LEN = 1;
@@ -29,24 +29,24 @@ constexpr int SEQ_CNT_OR_NAME_LEN = 14;
 constexpr int DATA_LEN_LEN = 16;
 
 // 0 denotes a data section of a single byte
-static constexpr std::size_t MAX_DATA_LEN = 1 << ccsds::DATA_LEN_LEN;
-}; // namespace ccsds
+static constexpr std::size_t MAX_DATA_LEN = 1 << spp::DATA_LEN_LEN;
+}; // namespace spp
 
 #pragma pack(push, 1)
-struct CCSDSPrimaryHeader {
+struct SPPPrimaryHeader {
   template <typename SecondaryHeader, typename DataField>
-  friend class CCSDSPacket;
+  friend class SPPPacket;
 
 private:
-  uint16_t _app_id_h : ccsds::APP_ID_LEN - 8 = 0;
-  uint16_t _sec_hdr_flag : ccsds::SEC_HDR_FLAG_LEN = 0;
-  uint16_t _type : ccsds::TYPE_FLAG_LEN = 0;
-  uint16_t _version_number : ccsds::VERSION_NUMBER_LEN = 0;
+  uint16_t _app_id_h : spp::APP_ID_LEN - 8 = 0;
+  uint16_t _sec_hdr_flag : spp::SEC_HDR_FLAG_LEN = 0;
+  uint16_t _type : spp::TYPE_FLAG_LEN = 0;
+  uint16_t _version_number : spp::VERSION_NUMBER_LEN = 0;
   uint16_t _app_id_l : 8 = 0;
-  uint16_t _seq_cnt_or_name_h : ccsds::SEQ_CNT_OR_NAME_LEN - 8 = 0;
-  uint16_t _seq_flags : ccsds::SEQ_FLAGS_LEN = 0;
+  uint16_t _seq_cnt_or_name_h : spp::SEQ_CNT_OR_NAME_LEN - 8 = 0;
+  uint16_t _seq_flags : spp::SEQ_FLAGS_LEN = 0;
   uint16_t _seq_cnt_or_name_l : 8 = 0;
-  uint16_t _data_len_h : ccsds::DATA_LEN_LEN - 8 = 0;
+  uint16_t _data_len_h : spp::DATA_LEN_LEN - 8 = 0;
   uint16_t _data_len_l : 8 = 0;
 
 public:
@@ -95,29 +95,29 @@ public:
   Iterator begin() { return Iterator(reinterpret_cast<std::byte *>(this)); }
   Iterator end() {
     return Iterator(reinterpret_cast<std::byte *>(this) +
-                    sizeof(CCSDSPrimaryHeader));
+                    sizeof(SPPPrimaryHeader));
   }
 };
 #pragma pack(pop)
-static_assert(std::is_trivially_copyable_v<CCSDSPrimaryHeader>,
-              "CCSDSPrimaryHeader is not trivially copyable");
-static_assert(std::is_standard_layout_v<CCSDSPrimaryHeader>,
-              "CCSDSPrimaryHeader is not a standard layout type");
-static_assert(sizeof(CCSDSPrimaryHeader) == 6,
-              "CCSDSPrimaryHeader is not of size 6 as in the spec");
+static_assert(std::is_trivially_copyable_v<SPPPrimaryHeader>,
+              "SPPPrimaryHeader is not trivially copyable");
+static_assert(std::is_standard_layout_v<SPPPrimaryHeader>,
+              "SPPPrimaryHeader is not a standard layout type");
+static_assert(sizeof(SPPPrimaryHeader) == 6,
+              "SPPPrimaryHeader is not of size 6 as in the spec");
 
-namespace ccsds {
+namespace spp {
 constexpr int MIN_PACKET_LEN =
-    sizeof(CCSDSPrimaryHeader) +
+    sizeof(SPPPrimaryHeader) +
     1; // The data zone must contain at least one byte
 constexpr int MAX_PACKET_LEN =
-    sizeof(CCSDSPrimaryHeader) + (1 << DATA_LEN_LEN) + 1;
-} // namespace ccsds
+    sizeof(SPPPrimaryHeader) + (1 << DATA_LEN_LEN) + 1;
+} // namespace spp
 
 // The default data field, consisting just of a single vector
-struct CCSDSDataField {
+struct SPPDataField {
   template <typename T, typename U>
-  friend class CCSDSPacket; // TODO: required? shouldn't be
+  friend class SPPPacket; // TODO: required? shouldn't be
 
 private:
   std::vector<std::byte> _data = std::vector<std::byte>(0);
@@ -125,16 +125,16 @@ private:
   auto size() const -> std::size_t { return _data.size(); }
 
 public:
-  CCSDSDataField() = default;
+  SPPDataField() = default;
 
   // Maybe take a vector instead?
   // It's okay to fail if you're passed something that's the wrong sized
-  CCSDSDataField(const char *data, std::size_t len) {
+  SPPDataField(const char *data, std::size_t len) {
     _data.resize(len);
     std::memcpy(_data.data(), data, len);
   }
 
-  CCSDSDataField(std::size_t len) {
+  SPPDataField(std::size_t len) {
     _data.resize(len);
   }
 
@@ -147,7 +147,7 @@ public:
   auto begin() const { return _data.begin(); }
   auto end() const { return _data.end(); }
 
-  friend auto operator>>(std::istream & is, CCSDSDataField & data_field) -> std::istream & {
+  friend auto operator>>(std::istream & is, SPPDataField & data_field) -> std::istream & {
     // std::cerr << "Reading data field size: " << data_field.size() << '\n';
     is.read(reinterpret_cast<char*>(data_field._data.data()), data_field.size());
     // std::cerr << "Read data field size: " << is.gcount() << '\n';
@@ -177,10 +177,10 @@ public:
 };
 
 template <typename SecondaryHeader = NullSecondaryHeader,
-          typename DataField = CCSDSDataField>
-struct CCSDSPacket {
+          typename DataField = SPPDataField>
+struct SPPPacket {
 private:
-  CCSDSPrimaryHeader primary_header;
+  SPPPrimaryHeader primary_header;
 
 public:
   SecondaryHeader secondary_header;
@@ -341,25 +341,25 @@ public:
                 "Data field must contain at least one byte"));
           }
           dirty_length = true;
-          int size = std::min(s.size(), ccsds::MAX_DATA_LEN);
+          int size = std::min(s.size(), spp::MAX_DATA_LEN);
           data_field.resize(size);
           std::copy_n(s.begin(), size, data_field._data.begin());
         }};
   }
 
-  CCSDSPacket() = default;
-  CCSDSPacket(uint8_t const *const input) {
+  SPPPacket() = default;
+  SPPPacket(uint8_t const *const input) {
     // Memcpy the fixed length header
-    std::memcpy(&primary_header, input, sizeof(CCSDSPrimaryHeader));
+    std::memcpy(&primary_header, input, sizeof(SPPPrimaryHeader));
 
-    secondary_header = SecondaryHeader(input + sizeof(CCSDSPrimaryHeader),
+    secondary_header = SecondaryHeader(input + sizeof(SPPPrimaryHeader),
                                        secondary_header.size());
 
     // TODO: remove this horrible hack to get the header size
     auto size = SecondaryHeader();
     int sec_hdr_size = size.size();
 
-    data_field = DataField(input + sizeof(CCSDSPrimaryHeader) + sec_hdr_size,
+    data_field = DataField(input + sizeof(SPPPrimaryHeader) + sec_hdr_size,
                            data_len() - sec_hdr_size +
                                1); // Length 0 is used to mean a single byte
   }
@@ -378,18 +378,18 @@ public:
   }
 
   template <typename S, typename D>
-  friend auto operator<<(std::ostream &output, CCSDSPacket<S, D> &packet)
+  friend auto operator<<(std::ostream &output, SPPPacket<S, D> &packet)
       -> std::ostream &;
   template <typename S, typename D>
-  friend auto operator>>(std::istream &input, CCSDSPacket<S, D> &packet)
+  friend auto operator>>(std::istream &input, SPPPacket<S, D> &packet)
       -> std::istream &;
 };
 
-static_assert(std::copyable<decltype(CCSDSPacket{}.end())>);
-static_assert(std::default_initializable<decltype(CCSDSPacket{}.end())>);
-static_assert(std::semiregular<decltype(CCSDSPacket{}.end())>);
-static_assert(std::sentinel_for<decltype(CCSDSPacket{}.end()),
-                                decltype(CCSDSPacket{}.begin())>);
+static_assert(std::copyable<decltype(SPPPacket{}.end())>);
+static_assert(std::default_initializable<decltype(SPPPacket{}.end())>);
+static_assert(std::semiregular<decltype(SPPPacket{}.end())>);
+static_assert(std::sentinel_for<decltype(SPPPacket{}.end()),
+                                decltype(SPPPacket{}.begin())>);
 
 // TODO: ask why this isn't working
 // An iterator over the items of It, static_cast to type to
@@ -433,7 +433,7 @@ public:
 
 template <typename SecondaryHeader, typename DataField>
 auto operator<<(std::ostream &output,
-                CCSDSPacket<SecondaryHeader, DataField> &packet)
+                SPPPacket<SecondaryHeader, DataField> &packet)
     -> std::ostream & {
   std::ranges::copy(std::ranges::views::transform(
                         packet, [](auto x) { return static_cast<char>(x); }),
@@ -473,7 +473,7 @@ public:
 
 template <typename SecondaryHeader, typename DataField>
 auto operator>>(std::istream &input,
-                CCSDSPacket<SecondaryHeader, DataField> &packet)
+                SPPPacket<SecondaryHeader, DataField> &packet)
     -> std::istream & {
   if (input.good()) {
     std::copy_n(map_iterator{std::istreambuf_iterator<char>{input},

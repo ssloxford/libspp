@@ -7,7 +7,7 @@
 // TODO: select desired outputs through flags
 
 int main(int argc, char *argv[]) {
-  cxxopts::Options options("ccsdsinfo", "Displays the header contents of a CCSDS packet stream from stdin");
+  cxxopts::Options options("sppinfo", "Displays the header contents of a CCSDS SPP packet stream from stdin");
   options.add_options()
     (
       "m,mode",
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (mode == "none") {
-    CCSDSPacket packet;
+    SPPPacket packet;
     std::cerr << "version-number\ttype-flag\tsec-hdr-flag\tapp-id\tseq-flags\tseq-cnt-or-name\tdata-len" << '\n';
     while (std::cin >> packet) {
       std::cout << packet.version_number() << "\t\t" \
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     }
 
   } else if (mode == "modis") {
-    CCSDSPacket<giis::SecondaryHeader, giis::DataField> packet;
+    SPPPacket<giis::SecondaryHeader, giis::DataField> packet;
     std::cerr << "version-number\ttype-flag\tsec-hdr-flag\tapp-id\tseq-flags\tseq-cnt-or-name\tdata-len\tmir-side\tscan-count\tpkt-type\tquick-look\tmodis-checksum\tmodis-checksum-valid" << '\n';
     bool done = false;
     while (!done) {
